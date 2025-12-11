@@ -1,0 +1,43 @@
+{
+    "nav": {
+        "logo": "BookRental",
+        "catalog": "Каталог",
+        "map": "Карта",
+        "login": "Кіру",
+        "getStarted": "Бастау",
+        "profile": "Профиль",
+        "logout": "Шығу"
+    },
+    "hero": {
+        "badge": "Сіздің қалаңызда қолжетімді",
+        "title": "Жаныңдағы адамдардан кітап жалға ал",
+        "subtitle": "Кітап әуесқойларына арналған P2P нарығы. Ақша үнемдеңіз, орын үнемдеңіз және аймағыңыздағы оқырмандар қауымдастығымен байланысыңыз.",
+        "browseBooks": "Кітап іздеу",
+        "listBook": "Кітап тапсыру",
+        "trustedBy": "Бізге сенеді",
+        "readers": "оқырман"
+    },
+    "auth": {
+        "login": "Кіру",
+        "register": "Тіркелу",
+        "email": "Электрондық пошта",
+        "password": "Құпия сөз",
+        "name": "Аты",
+        "loginButton": "Кіру",
+        "registerButton": "Тіркелу",
+        "noAccount": "Аккаунт жоқ па?",
+        "haveAccount": "Аккаунт бар ма?",
+        "invalidCredentials": "Қате деректер",
+        "emailExists": "Бұл email тіркелген"
+    },
+    "profile": {
+        "title": "Профиль",
+        "subscription": "Жазылым",
+        "freePlan": "Тегін",
+        "premiumPlan": "Premium",
+        "unlimited": "Шектеусіз",
+        "booksLimit": "кітап",
+        "upgradeToPremium": "Premium сатып алу",
+        "myBooks": "Менің кітаптарым"
+    }
+}

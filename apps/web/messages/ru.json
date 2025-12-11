@@ -1,0 +1,43 @@
+{
+    "nav": {
+        "logo": "BookRental",
+        "catalog": "Каталог",
+        "map": "Карта",
+        "login": "Войти",
+        "getStarted": "Начать",
+        "profile": "Профиль",
+        "logout": "Выйти"
+    },
+    "hero": {
+        "badge": "Доступно в вашем городе",
+        "title": "Арендуй книги у людей поблизости",
+        "subtitle": "P2P маркетплейс для любителей книг. Экономьте деньги, экономьте место и общайтесь с сообществом читателей в вашем районе.",
+        "browseBooks": "Найти книгу",
+        "listBook": "Сдать книгу",
+        "trustedBy": "Нам доверяют",
+        "readers": "читателей"
+    },
+    "auth": {
+        "login": "Вход",
+        "register": "Регистрация",
+        "email": "Электронная почта",
+        "password": "Пароль",
+        "name": "Имя",
+        "loginButton": "Войти",
+        "registerButton": "Зарегистрироваться",
+        "noAccount": "Нет аккаунта?",
+        "haveAccount": "Уже есть аккаунт?",
+        "invalidCredentials": "Неверные учетные данные",
+        "emailExists": "Пользователь с таким email уже существует"
+    },
+    "profile": {
+        "title": "Профиль",
+        "subscription": "Подписка",
+        "freePlan": "Бесплатный",
+        "premiumPlan": "Premium",
+        "unlimited": "Безлимит",
+        "booksLimit": "книг",
+        "upgradeToPremium": "Купить Premium",
+        "myBooks": "Мои книги"
+    }
+}

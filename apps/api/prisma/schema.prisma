@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum BookStatus {
+  AVAILABLE
+  RENTED
+  UNAVAILABLE
+}
+
+enum RentalStatus {
+  PENDING
+  CONFIRMED
+  PAID
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password_hash String
+  role          Role      @default(USER)
+  rating        Float     @default(0)
+  bio           String?
+  avatarUrl     String?
+  location_lat  Float?
+  location_lng  Float?
+  isPremium     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  books         Book[]
+  rentals       Rental[]
+  writtenReviews Review[]  @relation("WrittenReviews")
+  receivedReviews Review[] @relation("ReceivedReviews")
+}
+
+model Book {
+  id            String     @id @default(uuid())
+  title         String
+  author        String
+  isbn          String?
+  description   String?
+  genre         String?
+  imageUrls     String[]
+  dailyPrice    Float
+  deposit       Float
+  status        BookStatus @default(AVAILABLE)
+  location_lat  Float?
+  location_lng  Float?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  ownerId       String
+  owner         User       @relation(fields: [ownerId], references: [id])
+  rentals       Rental[]
+  reviews       Review[]
+}
+
+model Rental {
+  id          String       @id @default(uuid())
+  startDate   DateTime
+  endDate     DateTime
+  totalPrice  Float
+  status      RentalStatus @default(PENDING)
+  qrCodeData  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  bookId      String
+  book        Book         @relation(fields: [bookId], references: [id])
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  rating       Int
+  comment      String?
+  createdAt    DateTime @default(now())
+
+  authorId     String
+  author       User     @relation("WrittenReviews", fields: [authorId], references: [id])
+  
+  targetUserId String?
+  targetUser   User?    @relation("ReceivedReviews", fields: [targetUserId], references: [id])
+  
+  bookId       String?
+  book         Book?    @relation(fields: [bookId], references: [id])
+}

@@ -1,0 +1,16 @@
+{
+    "name": "book-rental-platform",
+    "private": true,
+    "packageManager": "npm@10.2.3",
+    "workspaces": [
+        "apps/*"
+    ],
+    "scripts": {
+        "dev": "npx turbo run dev",
+        "build": "npx turbo run build",
+        "lint": "npx turbo run lint"
+    },
+    "devDependencies": {
+        "turbo": "latest"
+    }
+}
