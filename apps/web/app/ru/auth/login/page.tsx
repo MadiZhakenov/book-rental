@@ -32,13 +32,17 @@ export default function LoginPage() {
     });
 
     const onSubmit = async (data: LoginForm) => {
+        console.log("Submitting login form:", data);
         try {
             setIsLoading(true);
             setError("");
+            console.log("Calling authApi.login...");
             const response = await authApi.login(data);
+            console.log("Login success:", response);
             setAuthToken(response.access_token);
             router.push("/ru/profile");
         } catch (err: any) {
+            console.error("Login error:", err);
             setError(err.response?.data?.message || "Неверные учетные данные");
         } finally {
             setIsLoading(false);

@@ -7,3 +7,4 @@ build
 .DS_Store
 *.log
 coverage
+node-v20.10.0-darwin-x64

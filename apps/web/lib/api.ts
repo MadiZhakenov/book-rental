@@ -11,7 +11,10 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
     const token = Cookies.get('token');
     if (token) {
+        console.log('Interceptor: Attaching token to request:', config.url);
         config.headers.Authorization = `Bearer ${token}`;
+    } else {
+        console.log('Interceptor: No token found for request:', config.url);
     }
     return config;
 });

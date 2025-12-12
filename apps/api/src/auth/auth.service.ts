@@ -41,25 +41,31 @@ export class AuthService {
     }
 
     async login(loginDto: LoginDto) {
+        console.log('Login attempt for:', loginDto.email);
         // Находим пользователя
         const user = await this.prisma.user.findUnique({
             where: { email: loginDto.email },
         });
 
         if (!user) {
+            console.log('User not found:', loginDto.email);
             throw new UnauthorizedException('Неверные учетные данные');
         }
 
+        console.log('User found, verifying password for:', user.email);
         // Проверяем пароль
         const isPasswordValid = await bcrypt.compare(loginDto.password, user.password_hash);
+        console.log('Password valid:', isPasswordValid);
 
         if (!isPasswordValid) {
+            console.log('Invalid password for:', loginDto.email);
             throw new UnauthorizedException('Неверные учетные данные');
         }
 
         // Генерируем токен
         const payload = { email: user.email, sub: user.id };
         const access_token = this.jwtService.sign(payload);
+        console.log('Login successful, token generated');
 
         return { access_token };
     }
