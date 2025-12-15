@@ -12,8 +12,4 @@ export class CreateRentalDto {
     @IsString()
     @IsNotEmpty()
     bookId: string;
-
-    @IsString()
-    @IsNotEmpty()
-    userId: string;
 }

@@ -3,9 +3,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { getPublicBooks, PublicBook, api } from "@/lib/api";
-import { Star, ArrowLeft } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { getPublicBooks, PublicBook, api, createRental, getAuthToken } from "@/lib/api";
+import { Star, ArrowLeft, Calendar } from "lucide-react";
 import Link from "next/link";
+import { differenceInDays, format, isAfter, startOfToday } from "date-fns";
+import { ru } from "date-fns/locale";
 
 interface BookDetail extends PublicBook {
     description?: string;
@@ -24,6 +28,11 @@ export default function BookDetailPage() {
     const [book, setBook] = useState<BookDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [startDate, setStartDate] = useState<string>("");
+    const [endDate, setEndDate] = useState<string>("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string>("");
+    const [success, setSuccess] = useState<string>("");
 
     useEffect(() => {
         const loadBook = async () => {
@@ -79,6 +88,67 @@ export default function BookDetailPage() {
 
     const images = book.images && book.images.length > 0 ? book.images : [];
     const currentImage = images[selectedImageIndex] || null;
+
+    // Calculate rental price
+    const calculatePrice = () => {
+        if (!startDate || !endDate) return 0;
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        if (end <= start) return 0;
+        const days = differenceInDays(end, start) + 1;
+        return days * book.dailyPrice;
+    };
+
+    const days = startDate && endDate ? differenceInDays(new Date(endDate), new Date(startDate)) + 1 : 0;
+    const totalPrice = calculatePrice();
+
+    const handleSubmit = async () => {
+        if (!getAuthToken()) {
+            router.push(`/${locale}/auth/login`);
+            return;
+        }
+
+        if (!startDate || !endDate) {
+            setError("Пожалуйста, выберите даты аренды");
+            return;
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const today = startOfToday();
+
+        if (start < today) {
+            setError("Дата начала не может быть в прошлом");
+            return;
+        }
+
+        if (end <= start) {
+            setError("Дата окончания должна быть позже даты начала");
+            return;
+        }
+
+        setIsSubmitting(true);
+        setError("");
+        setSuccess("");
+
+        try {
+            await createRental({
+                bookId: book.id,
+                startDate: start.toISOString(),
+                endDate: end.toISOString(),
+            });
+            setSuccess("Запрос на аренду успешно отправлен!");
+            setStartDate("");
+            setEndDate("");
+            setTimeout(() => {
+                router.push(`/${locale}/profile`);
+            }, 2000);
+        } catch (err: any) {
+            setError(err.response?.data?.message || "Не удалось отправить запрос. Попробуйте позже.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#FAFAF9] py-12 font-manrope">
@@ -154,12 +224,12 @@ export default function BookDetailPage() {
                                 <span className="text-4xl font-bold text-orange-600">
                                     {book.dailyPrice}
                                 </span>
-                                <span className="text-xl text-stone-600">₽</span>
+                                <span className="text-xl text-stone-600">₸</span>
                                 <span className="text-stone-500">/ сутки</span>
                             </div>
                             {book.deposit > 0 && (
                                 <p className="text-sm text-stone-500 mt-2">
-                                    Залог: {book.deposit} ₽
+                                    Залог: {book.deposit} ₸
                                 </p>
                             )}
                         </div>
@@ -235,16 +305,75 @@ export default function BookDetailPage() {
                             )}
                         </div>
 
-                        {/* CTA Button */}
-                        <Button
-                            className="w-full h-14 bg-orange-600 hover:bg-orange-700 text-white rounded-full text-lg font-bold"
-                            onClick={() => {
-                                // TODO: Implement booking logic
-                                alert('Функция бронирования будет реализована позже');
-                            }}
-                        >
-                            Забронировать
-                        </Button>
+                        {/* Booking Section */}
+                        <div className="p-6 bg-white rounded-xl border border-stone-200 space-y-4">
+                            <h3 className="text-lg font-semibold text-stone-900 mb-4">
+                                Забронировать книгу
+                            </h3>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <Label htmlFor="startDate" className="text-stone-700 mb-2 block">
+                                        Дата начала
+                                    </Label>
+                                    <Input
+                                        id="startDate"
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        min={format(startOfToday(), "yyyy-MM-dd")}
+                                        className="w-full"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <Label htmlFor="endDate" className="text-stone-700 mb-2 block">
+                                        Дата окончания
+                                    </Label>
+                                    <Input
+                                        id="endDate"
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        min={startDate || format(startOfToday(), "yyyy-MM-dd")}
+                                        className="w-full"
+                                    />
+                                </div>
+
+                                {days > 0 && (
+                                    <div className="p-4 bg-stone-50 rounded-lg border border-stone-200">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-stone-600">
+                                                {book.dailyPrice} ₸ × {days} {days === 1 ? "день" : days < 5 ? "дня" : "дней"}
+                                            </span>
+                                            <span className="text-2xl font-bold text-orange-600">
+                                                {totalPrice.toFixed(0)} ₸
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {error && (
+                                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                                        {error}
+                                    </div>
+                                )}
+
+                                {success && (
+                                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                                        {success}
+                                    </div>
+                                )}
+
+                                <Button
+                                    className="w-full h-14 bg-orange-600 hover:bg-orange-700 text-white rounded-full text-lg font-bold"
+                                    onClick={handleSubmit}
+                                    disabled={isSubmitting || !startDate || !endDate}
+                                >
+                                    {isSubmitting ? "Отправка..." : "Отправить запрос"}
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

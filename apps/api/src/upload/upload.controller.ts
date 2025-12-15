@@ -17,13 +17,13 @@ export class UploadController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: './uploads',
-        filename: (req, file, cb) => {
+        filename: (_req: any, file: any, cb: any) => {
           const ext = extname(file.originalname);
           const filename = `${randomUUID()}${ext}`;
           cb(null, filename);
         },
       }),
-      fileFilter: (req, file, cb) => {
+      fileFilter: (_req: any, file: any, cb: any) => {
         const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
         if (allowedMimeTypes.includes(file.mimetype)) {
           cb(null, true);
@@ -36,7 +36,7 @@ export class UploadController {
       },
     }),
   )
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  async uploadFile(@UploadedFile() file: any) {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }

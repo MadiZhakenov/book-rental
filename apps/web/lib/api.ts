@@ -181,3 +181,60 @@ export const getPublicBooks = async (query?: PublicBooksQuery): Promise<PublicBo
     const response = await api.get(`/books/public?${params.toString()}`);
     return response.data;
 };
+
+export interface Rental {
+    id: string;
+    startDate: string;
+    endDate: string;
+    totalPrice: number;
+    status: string;
+    pickupSecret?: string;
+    book: {
+        id: string;
+        title: string;
+        images: string[];
+        dailyPrice: number;
+        owner?: {
+            id: string;
+            email: string;
+            avatarUrl: string | null;
+        };
+    };
+    user?: {
+        id: string;
+        email: string;
+        avatarUrl: string | null;
+    };
+    createdAt: string;
+}
+
+export interface CreateRentalDto {
+    bookId: string;
+    startDate: string;
+    endDate: string;
+}
+
+export const createRental = async (data: CreateRentalDto): Promise<Rental> => {
+    const response = await api.post('/rentals', data);
+    return response.data;
+};
+
+export const getMyRentals = async (type: 'incoming' | 'outgoing'): Promise<Rental[]> => {
+    const response = await api.get(`/rentals/my?type=${type}`);
+    return response.data;
+};
+
+export const updateRentalStatus = async (id: string, status: 'APPROVED' | 'REJECTED'): Promise<Rental> => {
+    const response = await api.patch(`/rentals/${id}/status`, { status });
+    return response.data;
+};
+
+export const verifyRental = async (rentalId: string, secret: string, action: 'PICKUP' | 'RETURN'): Promise<Rental> => {
+    const response = await api.post('/rentals/verify', { rentalId, secret, action });
+    return response.data;
+};
+
+export const confirmReturn = async (rentalId: string): Promise<Rental> => {
+    const response = await api.post(`/rentals/${rentalId}/return`);
+    return response.data;
+};

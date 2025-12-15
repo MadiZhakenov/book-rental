@@ -27,6 +27,8 @@ enum BookStatus {
 
 enum RentalStatus {
   PENDING
+  APPROVED
+  REJECTED
   CONFIRMED
   PAID
   ACTIVE
@@ -86,6 +88,7 @@ model Rental {
   totalPrice  Float
   status      RentalStatus @default(PENDING)
   qrCodeData  String?
+  pickupSecret String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 

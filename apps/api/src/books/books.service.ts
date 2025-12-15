@@ -70,15 +70,15 @@ export class BooksService {
     }
 
     async findAllPublic(query: {
-        page?: number;
-        limit?: number;
+        page?: number | string;
+        limit?: number | string;
         search?: string;
         genre?: string;
-        minPrice?: number;
-        maxPrice?: number;
+        minPrice?: number | string;
+        maxPrice?: number | string;
     }) {
-        const page = query.page || 1;
-        const limit = query.limit || 12;
+        const page = query.page ? Number(query.page) : 1;
+        const limit = query.limit ? Number(query.limit) : 12;
         const skip = (page - 1) * limit;
 
         const where: any = {
@@ -96,13 +96,16 @@ export class BooksService {
             where.genre = query.genre;
         }
 
-        if (query.minPrice !== undefined || query.maxPrice !== undefined) {
+        const minPrice = query.minPrice !== undefined ? Number(query.minPrice) : undefined;
+        const maxPrice = query.maxPrice !== undefined ? Number(query.maxPrice) : undefined;
+
+        if (minPrice !== undefined || maxPrice !== undefined) {
             where.dailyPrice = {};
-            if (query.minPrice !== undefined) {
-                where.dailyPrice.gte = query.minPrice;
+            if (minPrice !== undefined) {
+                where.dailyPrice.gte = minPrice;
             }
-            if (query.maxPrice !== undefined) {
-                where.dailyPrice.lte = query.maxPrice;
+            if (maxPrice !== undefined) {
+                where.dailyPrice.lte = maxPrice;
             }
         }
 
