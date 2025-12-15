@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsArray, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsArray } from 'class-validator';
 
 export class CreateBookDto {
     @IsString()
@@ -24,7 +24,15 @@ export class CreateBookDto {
     @IsArray()
     @IsString({ each: true })
     @IsOptional()
-    imageUrls?: string[];
+    images?: string[];
+
+    @IsNumber()
+    @IsOptional()
+    publishYear?: number;
+
+    @IsString()
+    @IsOptional()
+    language?: string;
 
     @IsNumber()
     @IsNotEmpty()
@@ -33,8 +41,4 @@ export class CreateBookDto {
     @IsNumber()
     @IsNotEmpty()
     deposit: number;
-
-    @IsString()
-    @IsNotEmpty()
-    ownerId: string;
 }

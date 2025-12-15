@@ -22,6 +22,7 @@ enum BookStatus {
   AVAILABLE
   RENTED
   UNAVAILABLE
+  ARCHIVED
 }
 
 enum RentalStatus {
@@ -61,7 +62,9 @@ model Book {
   isbn          String?
   description   String?
   genre         String?
-  imageUrls     String[]
+  images        String[]
+  publishYear   Int?
+  language      String     @default("ru")
   dailyPrice    Float
   deposit       Float
   status        BookStatus @default(AVAILABLE)

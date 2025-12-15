@@ -48,6 +48,104 @@ export class BooksService {
         });
     }
 
+    async findAllByOwner(userId: string) {
+        return this.prisma.book.findMany({
+            where: {
+                ownerId: userId,
+            },
+            select: {
+                id: true,
+                title: true,
+                author: true,
+                dailyPrice: true,
+                images: true,
+                status: true,
+                deposit: true,
+                createdAt: true,
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+    }
+
+    async findAllPublic(query: {
+        page?: number;
+        limit?: number;
+        search?: string;
+        genre?: string;
+        minPrice?: number;
+        maxPrice?: number;
+    }) {
+        const page = query.page || 1;
+        const limit = query.limit || 12;
+        const skip = (page - 1) * limit;
+
+        const where: any = {
+            status: 'AVAILABLE',
+        };
+
+        if (query.search) {
+            where.OR = [
+                { title: { contains: query.search, mode: 'insensitive' } },
+                { author: { contains: query.search, mode: 'insensitive' } },
+            ];
+        }
+
+        if (query.genre) {
+            where.genre = query.genre;
+        }
+
+        if (query.minPrice !== undefined || query.maxPrice !== undefined) {
+            where.dailyPrice = {};
+            if (query.minPrice !== undefined) {
+                where.dailyPrice.gte = query.minPrice;
+            }
+            if (query.maxPrice !== undefined) {
+                where.dailyPrice.lte = query.maxPrice;
+            }
+        }
+
+        const [books, total] = await Promise.all([
+            this.prisma.book.findMany({
+                where,
+                select: {
+                    id: true,
+                    title: true,
+                    author: true,
+                    dailyPrice: true,
+                    images: true,
+                    status: true,
+                    deposit: true,
+                    createdAt: true,
+                    owner: {
+                        select: {
+                            id: true,
+                            email: true,
+                            avatarUrl: true,
+                        },
+                    },
+                },
+                skip,
+                take: limit,
+                orderBy: {
+                    createdAt: 'desc',
+                },
+            }),
+            this.prisma.book.count({ where }),
+        ]);
+
+        return {
+            books,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
+    }
+
     async findOne(id: string) {
         return this.prisma.book.findUnique({
             where: { id },
@@ -57,6 +155,7 @@ export class BooksService {
                         id: true,
                         email: true,
                         rating: true,
+                        avatarUrl: true,
                     },
                 },
                 reviews: true,

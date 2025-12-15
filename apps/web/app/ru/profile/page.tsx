@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { authApi, removeAuthToken, getAuthToken, User } from "@/lib/api";
+import { authApi, removeAuthToken, getAuthToken, User, getMyBooks, MyBook } from "@/lib/api";
 import { Crown, BookOpen, LogOut } from "lucide-react";
+import { BookCard } from "@/components/BookCard";
 
 export default function ProfilePage() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [books, setBooks] = useState<MyBook[]>([]);
+    const [isLoadingBooks, setIsLoadingBooks] = useState(true);
 
     useEffect(() => {
         const loadUser = async () => {
@@ -32,6 +35,29 @@ export default function ProfilePage() {
 
         loadUser();
     }, [router]);
+
+    useEffect(() => {
+        const loadBooks = async () => {
+            const token = getAuthToken();
+            if (!token) {
+                return;
+            }
+
+            try {
+                setIsLoadingBooks(true);
+                const booksData = await getMyBooks();
+                setBooks(booksData);
+            } catch (error) {
+                console.error('Failed to load books:', error);
+            } finally {
+                setIsLoadingBooks(false);
+            }
+        };
+
+        if (user) {
+            loadBooks();
+        }
+    }, [user]);
 
     const handleLogout = () => {
         removeAuthToken();
@@ -122,9 +148,43 @@ export default function ProfilePage() {
                             </Button>
                         </div>
 
-                        <div className="rounded-2xl border-2 border-dashed border-stone-200 p-12 text-center bg-stone-50/50">
-                            <p className="text-stone-500 font-medium">У вас {user.booksCount} {user.booksCount === 1 ? "книга" : "книг"}</p>
-                        </div>
+                        {isLoadingBooks ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {[...Array(6)].map((_, i) => (
+                                    <div key={i} className="bg-white rounded-xl shadow-sm border border-stone-100 animate-pulse">
+                                        <div className="aspect-[2/3] bg-stone-200"></div>
+                                        <div className="p-4 space-y-2">
+                                            <div className="h-4 bg-stone-200 rounded w-3/4"></div>
+                                            <div className="h-3 bg-stone-200 rounded w-1/2"></div>
+                                            <div className="h-3 bg-stone-200 rounded w-1/4"></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : books.length === 0 ? (
+                            <div className="rounded-2xl border-2 border-dashed border-stone-200 p-12 text-center bg-stone-50/50">
+                                <BookOpen className="mx-auto h-12 w-12 text-stone-400 mb-4" />
+                                <p className="text-stone-600 font-medium text-lg mb-2">Ваша библиотека пуста</p>
+                                <p className="text-stone-500 text-sm mb-6">Начните добавлять книги в свою коллекцию</p>
+                                <Button className="rounded-full bg-orange-600 hover:bg-orange-700 text-white" asChild>
+                                    <a href="/ru/books/create">Добавить книгу</a>
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {books.map((book) => (
+                                    <BookCard
+                                        key={book.id}
+                                        id={book.id}
+                                        title={book.title}
+                                        author={book.author}
+                                        dailyPrice={book.dailyPrice}
+                                        images={book.images}
+                                        status={book.status}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
