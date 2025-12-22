@@ -27,6 +27,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         }
 
         console.log('JwtStrategy: User valid:', user.email);
-        return { userId: user.id, email: user.email };
+        return { userId: user.id, email: user.email, role: user.role };
     }
 }

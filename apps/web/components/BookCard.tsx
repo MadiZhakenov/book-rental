@@ -1,5 +1,6 @@
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
+import { formatPrice } from "@/lib/utils";
 
 interface BookCardProps {
     id: string;
@@ -94,7 +95,7 @@ export function BookCard({ id, title, author, dailyPrice, images, status, owner,
 
                 <div className="flex items-center justify-between pt-2">
                     <p className="text-orange-600 font-bold text-sm">
-                        {dailyPrice} ₽/день
+                        {formatPrice(dailyPrice)}/день
                     </p>
                     {getStatusBadge(status)}
                 </div>

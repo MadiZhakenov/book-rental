@@ -2,14 +2,40 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { BookOpen, Search, Sparkles, Star } from "lucide-react";
 import { Navbar } from "@/components/navbar-ru";
+import { BookCard } from "@/components/BookCard";
+import { PublicBook } from "@/lib/api";
 
-export default function RuPage() {
+// Принудительно динамический рендеринг
+export const dynamic = 'force-dynamic';
+
+async function getFeaturedBooks() {
+    try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        const response = await fetch(`${API_URL}/books/featured`, {
+            cache: 'no-store',
+        });
+        
+        if (!response.ok) {
+            return { popular: [], newArrivals: [] };
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to fetch featured books:', error);
+        return { popular: [], newArrivals: [] };
+    }
+}
+
+export default async function RuPage() {
+    const featured = await getFeaturedBooks();
+    const locale = "ru";
+    
     return (
         <div className="font-manrope bg-[#FAFAF9] min-h-screen flex flex-col text-stone-900">
             <Navbar />
 
             <main className="flex-1 flex flex-col">
-                <section className="relative overflow-hidden flex-1 flex flex-col justify-center py-12 lg:py-0">
+                <section className="relative overflow-hidden py-12 lg:py-20">
                     {/* Background Gradients */}
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full z-0 pointer-events-none">
                         <div className="absolute top-20 left-1/2 -ml-[40rem] w-[80rem] h-[40rem] bg-stone-500/10 rounded-full blur-[100px] opacity-60 mix-blend-multiply" />
@@ -66,6 +92,63 @@ export default function RuPage() {
                         </div>
                     </div>
                 </section>
+
+                {/* Featured Books Section */}
+                {(featured.popular?.length > 0 || featured.newArrivals?.length > 0) && (
+                    <section className="container mx-auto px-4 py-16">
+                        {featured.popular?.length > 0 && (
+                            <div className="mb-16">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-3xl font-bold text-stone-900">Популярное</h2>
+                                    <Link href={`/${locale}/catalog`} className="text-orange-600 hover:text-orange-700 font-medium">
+                                        Смотреть все →
+                                    </Link>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {featured.popular.map((book: PublicBook) => (
+                                        <BookCard
+                                            key={book.id}
+                                            id={book.id}
+                                            title={book.title}
+                                            author={book.author}
+                                            dailyPrice={book.dailyPrice}
+                                            images={book.images || []}
+                                            status={book.status}
+                                            owner={book.owner}
+                                            locale={locale}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {featured.newArrivals?.length > 0 && (
+                            <div>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-3xl font-bold text-stone-900">Новинки</h2>
+                                    <Link href={`/${locale}/catalog`} className="text-orange-600 hover:text-orange-700 font-medium">
+                                        Смотреть все →
+                                    </Link>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {featured.newArrivals.map((book: PublicBook) => (
+                                        <BookCard
+                                            key={book.id}
+                                            id={book.id}
+                                            title={book.title}
+                                            author={book.author}
+                                            dailyPrice={book.dailyPrice}
+                                            images={book.images || []}
+                                            status={book.status}
+                                            owner={book.owner}
+                                            locale={locale}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </section>
+                )}
             </main>
         </div>
     );

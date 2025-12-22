@@ -2,14 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getPublicBooks, PublicBook, api, createRental, getAuthToken } from "@/lib/api";
-import { Star, ArrowLeft, Calendar } from "lucide-react";
+import { getPublicBooks, PublicBook, api, createRental, getAuthToken, getBookReviews, Review } from "@/lib/api";
+import { Star, ArrowLeft, Calendar, MapPin } from "lucide-react";
 import Link from "next/link";
 import { differenceInDays, format, isAfter, startOfToday } from "date-fns";
 import { ru } from "date-fns/locale";
+import { formatPrice } from "@/lib/utils";
+import { BookReviews } from "@/components/BookReviews";
+
+const LocationDisplay = dynamic(() => import("@/components/LocationDisplay"), { ssr: false });
 
 interface BookDetail extends PublicBook {
     description?: string;
@@ -17,6 +22,10 @@ interface BookDetail extends PublicBook {
     publishYear?: number;
     language?: string;
     genre?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    location_lat?: number | null;
+    location_lng?: number | null;
 }
 
 export default function BookDetailPage() {
@@ -33,6 +42,8 @@ export default function BookDetailPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string>("");
     const [success, setSuccess] = useState<string>("");
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [isLoadingReviews, setIsLoadingReviews] = useState(false);
 
     useEffect(() => {
         const loadBook = async () => {
@@ -49,6 +60,26 @@ export default function BookDetailPage() {
 
         if (bookId) {
             loadBook();
+        }
+    }, [bookId]);
+
+    useEffect(() => {
+        const loadReviews = async () => {
+            if (!bookId) return;
+
+            try {
+                setIsLoadingReviews(true);
+                const reviewsData = await getBookReviews(bookId);
+                setReviews(reviewsData);
+            } catch (err: any) {
+                console.error('Failed to load reviews:', err);
+            } finally {
+                setIsLoadingReviews(false);
+            }
+        };
+
+        if (bookId) {
+            loadReviews();
         }
     }, [bookId]);
 
@@ -222,14 +253,13 @@ export default function BookDetailPage() {
                         <div className="p-6 bg-white rounded-xl border border-stone-200">
                             <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-bold text-orange-600">
-                                    {book.dailyPrice}
+                                    {formatPrice(book.dailyPrice)}
                                 </span>
-                                <span className="text-xl text-stone-600">₸</span>
                                 <span className="text-stone-500">/ сутки</span>
                             </div>
                             {book.deposit > 0 && (
                                 <p className="text-sm text-stone-500 mt-2">
-                                    Залог: {book.deposit} ₸
+                                    Залог: {formatPrice(book.deposit)}
                                 </p>
                             )}
                         </div>
@@ -302,6 +332,35 @@ export default function BookDetailPage() {
                                     <span className="text-stone-500">Жанр:</span>
                                     <span className="ml-2 text-stone-900">{book.genre}</span>
                                 </div>
+                            )}
+                        </div>
+
+                        {/* Location */}
+                        {((book.latitude && book.longitude) || (book.location_lat && book.location_lng)) && (
+                            <div className="p-6 bg-white rounded-xl border border-stone-200">
+                                <h3 className="text-sm font-semibold text-stone-500 mb-3 flex items-center gap-2">
+                                    <MapPin className="h-4 w-4" />
+                                    Местоположение
+                                </h3>
+                                <LocationDisplay
+                                    latitude={(book.latitude ?? book.location_lat) as number}
+                                    longitude={(book.longitude ?? book.location_lng) as number}
+                                    title={book.title}
+                                />
+                            </div>
+                        )}
+
+                        {/* Reviews */}
+                        <div className="p-6 bg-stone-50 rounded-xl border border-stone-200">
+                            <h3 className="text-lg font-bold text-stone-900 mb-4">Отзывы</h3>
+                            {isLoadingReviews ? (
+                                <p className="text-stone-500">Загрузка отзывов...</p>
+                            ) : (
+                                <BookReviews
+                                    reviews={reviews}
+                                    averageRating={book?.averageRating || 0}
+                                    reviewsCount={book?.reviewsCount || 0}
+                                />
                             )}
                         </div>
 

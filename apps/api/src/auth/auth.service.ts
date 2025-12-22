@@ -34,7 +34,7 @@ export class AuthService {
         });
 
         // Генерируем токен
-        const payload = { email: user.email, sub: user.id };
+        const payload = { email: user.email, sub: user.id, role: user.role };
         const access_token = this.jwtService.sign(payload);
 
         return { access_token };
@@ -91,6 +91,7 @@ export class AuthService {
             isPremium: user.isPremium,
             booksCount: user._count.books,
             rating: user.rating,
+            role: user.role,
             createdAt: user.createdAt,
         };
     }

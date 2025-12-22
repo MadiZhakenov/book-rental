@@ -121,6 +121,10 @@ export class BooksService {
                     status: true,
                     deposit: true,
                     createdAt: true,
+                    location_lat: true,
+                    location_lng: true,
+                    latitude: true,
+                    longitude: true,
                     owner: {
                         select: {
                             id: true,
@@ -195,5 +199,71 @@ export class BooksService {
         return this.prisma.book.delete({
             where: { id },
         });
+    }
+
+    async getFeatured() {
+        const [popular, newArrivals] = await Promise.all([
+            this.prisma.book.findMany({
+                where: {
+                    status: 'AVAILABLE',
+                },
+                select: {
+                    id: true,
+                    title: true,
+                    author: true,
+                    dailyPrice: true,
+                    images: true,
+                    status: true,
+                    deposit: true,
+                    createdAt: true,
+                    averageRating: true,
+                    reviewsCount: true,
+                    owner: {
+                        select: {
+                            id: true,
+                            email: true,
+                            avatarUrl: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    averageRating: 'desc',
+                },
+                take: 4,
+            }),
+            this.prisma.book.findMany({
+                where: {
+                    status: 'AVAILABLE',
+                },
+                select: {
+                    id: true,
+                    title: true,
+                    author: true,
+                    dailyPrice: true,
+                    images: true,
+                    status: true,
+                    deposit: true,
+                    createdAt: true,
+                    averageRating: true,
+                    reviewsCount: true,
+                    owner: {
+                        select: {
+                            id: true,
+                            email: true,
+                            avatarUrl: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                take: 4,
+            }),
+        ]);
+
+        return {
+            popular,
+            newArrivals,
+        };
     }
 }

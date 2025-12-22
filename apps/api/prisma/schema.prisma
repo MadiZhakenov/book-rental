@@ -37,6 +37,13 @@ enum RentalStatus {
   DISPUTED
 }
 
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
@@ -48,13 +55,15 @@ model User {
   location_lat  Float?
   location_lng  Float?
   isPremium     Boolean   @default(false)
+  isBlocked     Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   books         Book[]
   rentals       Rental[]
   writtenReviews Review[]  @relation("WrittenReviews")
-  receivedReviews Review[] @relation("ReceivedReviews")
+  notifications Notification[]
+  messages      Message[]
 }
 
 model Book {
@@ -72,6 +81,10 @@ model Book {
   status        BookStatus @default(AVAILABLE)
   location_lat  Float?
   location_lng  Float?
+  latitude      Float?
+  longitude     Float?
+  averageRating Float      @default(0)
+  reviewsCount  Int         @default(0)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
@@ -96,6 +109,8 @@ model Rental {
   user        User         @relation(fields: [userId], references: [id])
   bookId      String
   book        Book         @relation(fields: [bookId], references: [id])
+  review      Review?
+  messages    Message[]
 }
 
 model Review {
@@ -107,9 +122,38 @@ model Review {
   authorId     String
   author       User     @relation("WrittenReviews", fields: [authorId], references: [id])
   
-  targetUserId String?
-  targetUser   User?    @relation("ReceivedReviews", fields: [targetUserId], references: [id])
+  bookId       String
+  book         Book     @relation(fields: [bookId], references: [id])
   
-  bookId       String?
-  book         Book?    @relation(fields: [bookId], references: [id])
+  rentalId    String?  @unique
+  rental       Rental?  @relation(fields: [rentalId], references: [id])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  isRead    Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+  
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  
+  rentalId  String
+  rental    Rental   @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  
+  @@index([rentalId, createdAt])
 }

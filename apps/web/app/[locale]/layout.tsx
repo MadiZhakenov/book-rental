@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import "../globals.css";
-import { Navbar } from "@/components/navbar";
+import { NavbarWrapper } from "@/components/NavbarWrapper";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -18,6 +18,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
     title: "Book Rental Platform",
     description: "Peer-to-peer book rental marketplace",
+    manifest: "/manifest.json",
+    appleWebApp: {
+        capable: true,
+        title: "BookRental",
+        statusBarStyle: "default",
+    },
+};
+
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
 };
 
 export function generateStaticParams() {
@@ -36,11 +49,18 @@ export default async function RootLayout({
 
     return (
         <html lang={locale}>
+            <head>
+                <link rel="manifest" href="/manifest.json" />
+                <meta name="apple-mobile-web-app-capable" content="yes" />
+                <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+                <meta name="apple-mobile-web-app-title" content="BookRental" />
+                <meta name="theme-color" content="#FAFAF9" />
+            </head>
             <body
                 className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-background text-foreground antialiased selection:bg-primary/10`}
             >
                 <NextIntlClientProvider messages={messages}>
-                    <Navbar />
+                    <NavbarWrapper locale={locale} />
                     {children}
                 </NextIntlClientProvider>
             </body>

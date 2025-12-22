@@ -1,13 +1,16 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { PrismaClient, RentalStatus } from '@prisma/client';
+import { PrismaClient, RentalStatus, NotificationType } from '@prisma/client';
 import { CreateRentalDto } from './dto/create-rental.dto';
 import { UpdateRentalStatusDto } from './dto/update-rental-status.dto';
 import { VerifyRentalDto, RentalAction } from './dto/verify-rental.dto';
 import { randomUUID } from 'crypto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class RentalsService {
     private prisma = new PrismaClient();
+
+    constructor(private notificationsService: NotificationsService) {}
 
     async create(createRentalDto: CreateRentalDto, userId: string) {
         const { bookId, startDate, endDate } = createRentalDto;
@@ -70,7 +73,7 @@ export class RentalsService {
         const pickupSecret = randomUUID();
 
         // Create rental
-        return this.prisma.rental.create({
+        const rental = await this.prisma.rental.create({
             data: {
                 bookId,
                 userId,
@@ -97,6 +100,17 @@ export class RentalsService {
                 },
             },
         });
+
+        // Create notification for book owner
+        await this.notificationsService.create({
+            userId: book.ownerId,
+            title: 'Новый запрос на аренду',
+            message: `У вас новый запрос на аренду "${book.title}"`,
+            type: NotificationType.INFO,
+            link: `/profile?tab=incoming`,
+        });
+
+        return rental;
     }
 
     async findMyRentals(userId: string, type: 'incoming' | 'outgoing') {
@@ -185,7 +199,7 @@ export class RentalsService {
         }
 
         // Update status
-        return this.prisma.rental.update({
+        const updatedRental = await this.prisma.rental.update({
             where: { id: rentalId },
             data: {
                 status: status as RentalStatus,
@@ -208,6 +222,21 @@ export class RentalsService {
                 },
             },
         });
+
+        // Create notification for renter
+        const statusMessage = status === 'APPROVED' 
+            ? `Ваш запрос на "${rental.book.title}" одобрен`
+            : `Ваш запрос на "${rental.book.title}" отклонен`;
+
+        await this.notificationsService.create({
+            userId: rental.userId,
+            title: status === 'APPROVED' ? 'Запрос одобрен' : 'Запрос отклонен',
+            message: statusMessage,
+            type: status === 'APPROVED' ? NotificationType.SUCCESS : NotificationType.WARNING,
+            link: `/profile?tab=outgoing`,
+        });
+
+        return updatedRental;
     }
 
     async verifyRental(verifyRentalDto: VerifyRentalDto, userId: string) {
@@ -241,7 +270,7 @@ export class RentalsService {
             }
 
             // Update status to ACTIVE
-            return this.prisma.rental.update({
+            const updatedRental = await this.prisma.rental.update({
                 where: { id: rentalId },
                 data: {
                     status: RentalStatus.ACTIVE,
@@ -264,6 +293,17 @@ export class RentalsService {
                     },
                 },
             });
+
+            // Create notification for renter
+            await this.notificationsService.create({
+                userId: rental.userId,
+                title: 'Аренда началась',
+                message: `Аренда "${rental.book.title}" началась. Приятного чтения!`,
+                type: NotificationType.SUCCESS,
+                link: `/profile?tab=outgoing`,
+            });
+
+            return updatedRental;
         } else if (action === RentalAction.RETURN) {
             // RETURN logic
             if (rental.status !== RentalStatus.ACTIVE) {

@@ -26,6 +26,11 @@ export class BooksController {
         return this.booksService.findAllPublic(query);
     }
 
+    @Get('featured')
+    async getFeatured() {
+        return this.booksService.getFeatured();
+    }
+
     @Get('my')
     @UseGuards(AuthGuard('jwt'))
     async findMyBooks(@Request() req: any) {

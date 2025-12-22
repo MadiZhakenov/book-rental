@@ -41,4 +41,12 @@ export class CreateBookDto {
     @IsNumber()
     @IsNotEmpty()
     deposit: number;
+
+    @IsNumber()
+    @IsOptional()
+    latitude?: number;
+
+    @IsNumber()
+    @IsOptional()
+    longitude?: number;
 }

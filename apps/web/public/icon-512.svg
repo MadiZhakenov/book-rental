@@ -1,0 +1,7 @@
+
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#FAFAF9"/>
+  <rect x="102.4" y="76.8" width="307.2" height="358.4" rx="10.24" fill="#F97316" stroke="#EA580C" stroke-width="5.12"/>
+  <line x1="256" y1="76.8" x2="256" y2="435.2" stroke="#EA580C" stroke-width="5.12"/>
+  <text x="256" y="307.2" font-family="Arial, sans-serif" font-size="102.4" font-weight="bold" fill="#EA580C" text-anchor="middle" dominant-baseline="middle">BR</text>
+</svg>

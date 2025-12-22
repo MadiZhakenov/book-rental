@@ -37,6 +37,7 @@ export interface User {
     isPremium: boolean;
     booksCount: number;
     rating: number;
+    role?: string;
     createdAt: string;
 }
 
@@ -80,6 +81,8 @@ export interface CreateBookDto {
     language?: string;
     dailyPrice: number;
     deposit: number;
+    latitude?: number;
+    longitude?: number;
 }
 
 export interface Book {
@@ -143,6 +146,10 @@ export interface PublicBook {
     status: string;
     deposit: number;
     createdAt: string;
+    location_lat?: number | null;
+    location_lng?: number | null;
+    latitude?: number | null;
+    longitude?: number | null;
     owner: {
         id: string;
         email: string;
@@ -179,6 +186,16 @@ export const getPublicBooks = async (query?: PublicBooksQuery): Promise<PublicBo
     if (query?.maxPrice !== undefined) params.append('maxPrice', query.maxPrice.toString());
     
     const response = await api.get(`/books/public?${params.toString()}`);
+    return response.data;
+};
+
+export interface FeaturedBooks {
+    popular: PublicBook[];
+    newArrivals: PublicBook[];
+}
+
+export const getFeaturedBooks = async (): Promise<FeaturedBooks> => {
+    const response = await api.get('/books/featured');
     return response.data;
 };
 
@@ -237,4 +254,149 @@ export const verifyRental = async (rentalId: string, secret: string, action: 'PI
 export const confirmReturn = async (rentalId: string): Promise<Rental> => {
     const response = await api.post(`/rentals/${rentalId}/return`);
     return response.data;
+};
+
+export interface Notification {
+    id: string;
+    userId: string;
+    title: string;
+    message: string;
+    type: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
+    isRead: boolean;
+    link?: string | null;
+    createdAt: string;
+}
+
+export const getNotifications = async (): Promise<Notification[]> => {
+    const response = await api.get('/notifications');
+    return response.data;
+};
+
+export const markNotificationAsRead = async (id: string): Promise<void> => {
+    await api.patch(`/notifications/${id}/read`);
+};
+
+export const markAllNotificationsAsRead = async (): Promise<void> => {
+    await api.patch('/notifications/read-all');
+};
+
+export interface Review {
+    id: string;
+    rentalId: string;
+    rating: number;
+    comment?: string | null;
+    createdAt: string;
+    author: {
+        id: string;
+        email: string;
+        avatarUrl: string | null;
+    };
+}
+
+export const createReview = async (data: { rentalId: string; rating: number; comment?: string }): Promise<Review> => {
+    const response = await api.post('/reviews', data);
+    return response.data;
+};
+
+export const getBookReviews = async (bookId: string): Promise<Review[]> => {
+    const response = await api.get(`/reviews/book/${bookId}`);
+    return response.data;
+};
+
+// Chat API
+export interface Message {
+    id: string;
+    content: string;
+    createdAt: string;
+    senderId: string;
+    sender: {
+        id: string;
+        email: string;
+        avatarUrl: string | null;
+    };
+}
+
+export const getRentalMessages = async (rentalId: string): Promise<Message[]> => {
+    const response = await api.get(`/rentals/${rentalId}/messages`);
+    return response.data;
+};
+
+export const sendMessage = async (rentalId: string, content: string): Promise<Message> => {
+    const response = await api.post(`/rentals/${rentalId}/messages`, { content });
+    return response.data;
+};
+
+// Admin API
+export interface AdminStats {
+    totalUsers: number;
+    totalBooks: number;
+    activeRentals: number;
+}
+
+export interface AdminUser {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    isBlocked: boolean;
+    booksCount: number;
+    rentalsCount: number;
+    createdAt: string;
+}
+
+export interface PaginatedUsers {
+    users: AdminUser[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
+}
+
+export interface AdminBook {
+    id: string;
+    title: string;
+    author: string;
+    owner: {
+        id: string;
+        email: string;
+        name: string;
+    };
+    createdAt: string;
+}
+
+export interface PaginatedBooks {
+    books: AdminBook[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
+}
+
+export const adminApi = {
+    getStats: async (): Promise<AdminStats> => {
+        const response = await api.get('/admin/stats');
+        return response.data;
+    },
+
+    getUsers: async (page: number = 1, limit: number = 10): Promise<PaginatedUsers> => {
+        const response = await api.get(`/admin/users?page=${page}&limit=${limit}`);
+        return response.data;
+    },
+
+    banUser: async (id: string): Promise<void> => {
+        await api.patch(`/admin/users/${id}/ban`);
+    },
+
+    getBooks: async (page: number = 1, limit: number = 10): Promise<PaginatedBooks> => {
+        const response = await api.get(`/admin/books?page=${page}&limit=${limit}`);
+        return response.data;
+    },
+
+    deleteBook: async (id: string): Promise<void> => {
+        await api.delete(`/admin/books/${id}`);
+    },
 };

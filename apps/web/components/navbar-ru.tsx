@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getAuthToken } from "@/lib/api";
 import { User } from "lucide-react";
+import { NavbarNotifications } from "./NavbarNotifications";
 
 export function Navbar() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -22,13 +23,13 @@ export function Navbar() {
                     </Link>
                     <nav className="hidden gap-6 md:flex">
                         <Link
-                            href="/catalog"
-                            className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                            href="/ru/catalog"
+                            className="flex items-center text-sm font-medium text-stone-500 transition-colors hover:text-orange-600"
                         >
                             Каталог
                         </Link>
                         <Link
-                            href="/map"
+                            href="/ru/map"
                             className="flex items-center text-sm font-medium text-stone-500 transition-colors hover:text-orange-600"
                         >
                             Карта
@@ -39,6 +40,7 @@ export function Navbar() {
                     <Link href="/kk" className="text-sm text-stone-500 hover:text-orange-600">
                         KK
                     </Link>
+                    {isAuthenticated && <NavbarNotifications />}
                     {isAuthenticated ? (
                         <Button size="sm" asChild className="bg-orange-600 hover:bg-orange-700 text-white">
                             <Link href="/ru/profile">

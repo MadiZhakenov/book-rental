@@ -5,12 +5,15 @@ import { useRouter, useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { authApi, getAuthToken, uploadFile, createBook, CreateBookDto } from "@/lib/api";
 import { Upload, X, AlertCircle, Crown } from "lucide-react";
+
+const LocationPicker = dynamic(() => import("@/components/LocationPicker"), { ssr: false });
 
 const createBookSchema = z.object({
     images: z.array(z.string()).min(1, "Загрузите хотя бы одно изображение"),
@@ -25,6 +28,8 @@ const createBookSchema = z.object({
     description: z.string().optional(),
     dailyPrice: z.coerce.number({ required_error: "Цена обязательна" }).positive("Цена должна быть больше 0"),
     deposit: z.coerce.number({ required_error: "Залог обязателен" }).positive("Залог должен быть больше 0"),
+    latitude: z.number().optional().nullable(),
+    longitude: z.number().optional().nullable(),
 });
 
 type CreateBookForm = z.infer<typeof createBookSchema>;
@@ -55,10 +60,14 @@ export default function CreateBookPage() {
             description: "",
             dailyPrice: 0,
             deposit: 0,
+            latitude: null,
+            longitude: null,
         },
     });
 
     const watchedImages = watch("images");
+    const watchedLatitude = watch("latitude");
+    const watchedLongitude = watch("longitude");
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -137,6 +146,8 @@ export default function CreateBookPage() {
                 ...(data.isbn && { isbn: data.isbn }),
                 ...(data.description && { description: data.description }),
                 ...(data.publishYear && typeof data.publishYear === "number" && { publishYear: data.publishYear }),
+                ...(data.latitude !== null && data.latitude !== undefined && { latitude: data.latitude }),
+                ...(data.longitude !== null && data.longitude !== undefined && { longitude: data.longitude }),
             };
 
             await createBook(bookData);
@@ -382,7 +393,7 @@ export default function CreateBookPage() {
                                     <div className="space-y-4">
                                         <div>
                                             <Label htmlFor="dailyPrice" className="text-stone-900 font-bold">
-                                                Цена за сутки (₽) *
+                                                Цена за сутки (₸) *
                                             </Label>
                                             <Input
                                                 id="dailyPrice"
@@ -403,7 +414,7 @@ export default function CreateBookPage() {
 
                                         <div>
                                             <Label htmlFor="deposit" className="text-stone-900 font-bold">
-                                                Залог (₽) *
+                                                Залог (₸) *
                                             </Label>
                                             <Input
                                                 id="deposit"
@@ -420,6 +431,17 @@ export default function CreateBookPage() {
                                                     {errors.deposit.message}
                                                 </p>
                                             )}
+                                        </div>
+
+                                        <div>
+                                            <LocationPicker
+                                                latitude={watchedLatitude}
+                                                longitude={watchedLongitude}
+                                                onLocationChange={(lat, lng) => {
+                                                    setValue("latitude", lat);
+                                                    setValue("longitude", lng);
+                                                }}
+                                            />
                                         </div>
                                     </div>
                                 </div>

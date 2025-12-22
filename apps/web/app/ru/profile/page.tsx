@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { authApi, removeAuthToken, getAuthToken, User, getMyBooks, MyBook, getMyRentals, updateRentalStatus, verifyRental, confirmReturn, Rental } from "@/lib/api";
-import { Crown, BookOpen, LogOut, Check, X, Clock, QrCode } from "lucide-react";
+import { Crown, BookOpen, LogOut, Check, X, Clock, QrCode, MessageSquare } from "lucide-react";
 import { BookCard } from "@/components/BookCard";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { QRGeneratorModal } from "@/components/QRGeneratorModal";
 import { QRScannerModal } from "@/components/QRScannerModal";
+import { ReviewModal } from "@/components/ReviewModal";
+import { RentalChatModal } from "@/components/RentalChatModal";
+import { formatPrice } from "@/lib/utils";
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -25,6 +28,10 @@ export default function ProfilePage() {
     const [qrGeneratorOpen, setQrGeneratorOpen] = useState(false);
     const [qrScannerOpen, setQrScannerOpen] = useState(false);
     const [selectedRental, setSelectedRental] = useState<Rental | null>(null);
+    const [reviewModalOpen, setReviewModalOpen] = useState(false);
+    const [selectedRentalForReview, setSelectedRentalForReview] = useState<Rental | null>(null);
+    const [chatModalOpen, setChatModalOpen] = useState(false);
+    const [selectedRentalForChat, setSelectedRentalForChat] = useState<Rental | null>(null);
     const [successMessage, setSuccessMessage] = useState<string>("");
 
     useEffect(() => {
@@ -142,6 +149,19 @@ export default function ProfilePage() {
         } catch (error: any) {
             alert(error.response?.data?.message || 'Не удалось подтвердить возврат');
         }
+    };
+
+    const handleOpenReviewModal = (rental: Rental) => {
+        setSelectedRentalForReview(rental);
+        setReviewModalOpen(true);
+    };
+
+    const handleReviewSuccess = async () => {
+        await loadRentals();
+        setSuccessMessage('Отзыв успешно добавлен!');
+        setTimeout(() => {
+            setSuccessMessage("");
+        }, 3000);
     };
 
     const getStatusBadge = (status: string) => {
@@ -338,9 +358,24 @@ export default function ProfilePage() {
                                                                     С {format(new Date(rental.startDate), 'd MMMM', { locale: ru })} по {format(new Date(rental.endDate), 'd MMMM', { locale: ru })}
                                                                 </p>
                                                                 <p className="text-lg font-bold text-orange-600">
-                                                                    {rental.totalPrice.toFixed(0)} ₸
+                                                                    {formatPrice(rental.totalPrice)}
                                                                 </p>
                                                             </div>
+                                                            {(['APPROVED', 'CONFIRMED', 'PAID', 'ACTIVE'].includes(rental.status)) && (
+                                                                <div className="mb-2">
+                                                                    <Button
+                                                                        onClick={() => {
+                                                                            setSelectedRentalForChat(rental);
+                                                                            setChatModalOpen(true);
+                                                                        }}
+                                                                        className="bg-orange-600 hover:bg-orange-700 text-white rounded-full"
+                                                                        size="sm"
+                                                                    >
+                                                                        <MessageSquare className="h-4 w-4 mr-2" />
+                                                                        Написать
+                                                                    </Button>
+                                                                </div>
+                                                            )}
                                                             {rental.status === 'PENDING' && (
                                                                 <div className="flex gap-2">
                                                                     <Button
@@ -362,15 +397,30 @@ export default function ProfilePage() {
                                                                     </Button>
                                                                 </div>
                                                             )}
-                                                            {rental.status === 'APPROVED' && (
-                                                                <Button
-                                                                    onClick={handleScanQR}
-                                                                    className="bg-orange-600 hover:bg-orange-700 text-white rounded-full"
-                                                                    size="sm"
-                                                                >
-                                                                    <QrCode className="h-4 w-4 mr-2" />
-                                                                    Сканировать QR (Выдать книгу)
-                                                                </Button>
+                                                            {(['APPROVED', 'CONFIRMED', 'PAID', 'ACTIVE'].includes(rental.status)) && (
+                                                                <div className="space-y-2">
+                                                                    <Button
+                                                                        onClick={() => {
+                                                                            setSelectedRentalForChat(rental);
+                                                                            setChatModalOpen(true);
+                                                                        }}
+                                                                        className="bg-orange-600 hover:bg-orange-700 text-white rounded-full mb-2"
+                                                                        size="sm"
+                                                                    >
+                                                                        <MessageSquare className="h-4 w-4 mr-2" />
+                                                                        Написать
+                                                                    </Button>
+                                                                    {rental.status === 'APPROVED' && (
+                                                                        <Button
+                                                                            onClick={handleScanQR}
+                                                                            className="bg-orange-600 hover:bg-orange-700 text-white rounded-full"
+                                                                            size="sm"
+                                                                        >
+                                                                            <QrCode className="h-4 w-4 mr-2" />
+                                                                            Сканировать QR (Выдать книгу)
+                                                                        </Button>
+                                                                    )}
+                                                                </div>
                                                             )}
                                                             {rental.status === 'ACTIVE' && (
                                                                 <Button
@@ -431,10 +481,35 @@ export default function ProfilePage() {
                                                                     С {format(new Date(rental.startDate), 'd MMMM', { locale: ru })} по {format(new Date(rental.endDate), 'd MMMM', { locale: ru })}
                                                                 </p>
                                                                 <p className="text-lg font-bold text-orange-600">
-                                                                    {rental.totalPrice.toFixed(0)} ₸
+                                                                    {formatPrice(rental.totalPrice)}
                                                                 </p>
                                                             </div>
-                                                            {rental.status === 'APPROVED' && (
+                                                            {(['APPROVED', 'CONFIRMED', 'PAID', 'ACTIVE'].includes(rental.status)) && (
+                                                                <div className="space-y-2">
+                                                                    <Button
+                                                                        onClick={() => {
+                                                                            setSelectedRentalForChat(rental);
+                                                                            setChatModalOpen(true);
+                                                                        }}
+                                                                        className="bg-orange-600 hover:bg-orange-700 text-white rounded-full mb-2"
+                                                                        size="sm"
+                                                                    >
+                                                                        <MessageSquare className="h-4 w-4 mr-2" />
+                                                                        Написать
+                                                                    </Button>
+                                                                    {rental.status === 'APPROVED' && (
+                                                                        <Button
+                                                                            onClick={() => handleShowQR(rental)}
+                                                                            className="bg-orange-600 hover:bg-orange-700 text-white rounded-full"
+                                                                            size="sm"
+                                                                        >
+                                                                            <QrCode className="h-4 w-4 mr-2" />
+                                                                            Показать QR для получения
+                                                                        </Button>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {rental.status === 'APPROVED' && !(['APPROVED', 'CONFIRMED', 'PAID', 'ACTIVE'].includes(rental.status)) && (
                                                                 <div className="space-y-2">
                                                                     <Button
                                                                         onClick={() => handleShowQR(rental)}
@@ -454,7 +529,16 @@ export default function ProfilePage() {
                                                                     </p>
                                                                 </div>
                                                             )}
-                                                            {rental.status !== 'APPROVED' && rental.status !== 'ACTIVE' && getStatusBadge(rental.status)}
+                                                            {rental.status === 'COMPLETED' && !(rental as any).review && (
+                                                                <Button
+                                                                    onClick={() => handleOpenReviewModal(rental)}
+                                                                    className="bg-orange-600 hover:bg-orange-700 text-white rounded-full"
+                                                                    size="sm"
+                                                                >
+                                                                    Оставить отзыв
+                                                                </Button>
+                                                            )}
+                                                            {rental.status !== 'APPROVED' && rental.status !== 'ACTIVE' && rental.status !== 'COMPLETED' && getStatusBadge(rental.status)}
                                                         </div>
                                                     </div>
                                                 </CardContent>
@@ -493,6 +577,27 @@ export default function ProfilePage() {
                     onClose={() => setQrScannerOpen(false)}
                     onScanSuccess={handleScanSuccess}
                 />
+                {selectedRentalForReview && (
+                    <ReviewModal
+                        isOpen={reviewModalOpen}
+                        onClose={() => {
+                            setReviewModalOpen(false);
+                            setSelectedRentalForReview(null);
+                        }}
+                        rentalId={selectedRentalForReview.id}
+                        bookTitle={selectedRentalForReview.book.title}
+                        onSuccess={handleReviewSuccess}
+                    />
+                )}
+                {selectedRentalForChat && user && (
+                    <RentalChatModal
+                        open={chatModalOpen}
+                        onOpenChange={setChatModalOpen}
+                        rental={selectedRentalForChat}
+                        currentUserId={user.id}
+                        locale="ru"
+                    />
+                )}
             </div>
         </div>
     );
